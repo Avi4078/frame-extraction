@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment variables
+.env
+
+# Virtual Environment
+venv/
+env/
+.venv/
+
+# Project specific
+temp/
+temp_video/
+thumbnails/
+output/
+pipeline.log
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Tests & Debug
+test_*.py
+debug_*.py
+test_output.txt
+*.log
+
+TASKS.md
+PRD.md
+Project.MD
+
+*.mp4
