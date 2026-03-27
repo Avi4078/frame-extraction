@@ -7,7 +7,7 @@ import json
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 
 def save_selected_frames(
@@ -47,6 +47,9 @@ def save_metadata_jsonl(
     edge_density: List[float],
     quality_scores: List[float],
     output_dir: str,
+    face_scores: Optional[List[float]] = None,
+    face_counts: Optional[List[int]] = None,
+    face_ear: Optional[List[float]] = None,
 ):
     """Write JSONL metadata for each selected frame."""
     filepath = os.path.join(output_dir, "metadata.jsonl")
@@ -64,6 +67,12 @@ def save_metadata_jsonl(
                 "edge_density": round(edge_density[idx], 4),
                 "quality_score": round(quality_scores[idx], 4),
             }
+            if face_scores is not None:
+                record["face_quality_score"] = round(face_scores[idx], 4)
+            if face_counts is not None:
+                record["n_faces"] = face_counts[idx]
+            if face_ear is not None:
+                record["face_ear"] = round(face_ear[idx], 4)
             f.write(json.dumps(record) + "\n")
 
 

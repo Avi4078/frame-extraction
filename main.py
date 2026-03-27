@@ -1,4 +1,4 @@
-﻿"""
+"""
 FrameCuration Engine - Main pipeline.
 
 Two-pass architecture:
@@ -28,6 +28,7 @@ from src.config import (
     DARK_THRESHOLD,
     EDGE_DENSITY_MAX,
     EDGE_DENSITY_MIN,
+    FACE_DETECTION_ENABLED,
     MOTION_THRESHOLD,
     POST_CUT_SKIP_SECONDS,
     QA_DEBUG,
@@ -166,6 +167,18 @@ def main():
         )
     print(f"  Duration: {info['duration_minutes']:.2f} min ({total_expected:,} frames)")
 
+    # Face detection setup.
+    face_analyzer = None
+    if FACE_DETECTION_ENABLED:
+        try:
+            from src.face_quality import FaceLandmarkAnalyzer
+            face_analyzer = FaceLandmarkAnalyzer()
+            print("  Face detection: ENABLED")
+        except ImportError:
+            print("  Face detection: DISABLED (mediapipe not installed)")
+    else:
+        print("  Face detection: DISABLED (config)")
+
     # Pass 1: stream and compute metrics.
     print("\nPass 1 - Computing per-frame metrics...")
 
@@ -176,6 +189,9 @@ def main():
     contrast_scores: list[float] = []
     colorfulness_scores_list: list[float] = []
     edge_densities: list[float] = []
+    face_scores_list: list[float] = []
+    face_counts_list: list[int] = []
+    face_ear_list: list[float] = []
     timestamps: list[float] = []
 
     prev_hist = None
@@ -231,6 +247,21 @@ def main():
 
         edges = cv2.Canny(gray_small, 50, 150)
         edge_densities.append(float(np.count_nonzero(edges)) / max(edges.size, 1))
+
+        # Face quality.
+        if face_analyzer is not None:
+            face_result = face_analyzer.analyze_frame(rgb_small)
+            face_scores_list.append(face_result.face_quality_score)
+            face_counts_list.append(face_result.n_faces)
+            face_ear_list.append(face_result.eye_openness)
+        else:
+            face_scores_list.append(0.0)
+            face_counts_list.append(0)
+            face_ear_list.append(0.0)
+
+    # Release face analyzer resources.
+    if face_analyzer is not None:
+        face_analyzer.close()
 
     total_frames = len(timestamps)
     print(f"  Analyzed {total_frames:,} frames")
@@ -376,11 +407,13 @@ def main():
     # Selection stages.
     print("\nSelection stages...")
 
+    face_scores_arg = face_scores_list if FACE_DETECTION_ENABLED else None
     quality_scores = compute_quality_scores(
         sharpness_scores,
         contrast_scores,
         colorfulness_scores_list,
         edge_densities,
+        face_scores=face_scores_arg,
     )
     feature_vectors = compute_feature_vectors(
         sharpness_scores,
@@ -496,6 +529,9 @@ def main():
         edge_densities,
         quality_scores,
         args.output_dir,
+        face_scores=face_scores_list if FACE_DETECTION_ENABLED else None,
+        face_counts=face_counts_list if FACE_DETECTION_ENABLED else None,
+        face_ear=face_ear_list if FACE_DETECTION_ENABLED else None,
     )
     save_final_contact_sheet(
         all_read_frames_rgb,

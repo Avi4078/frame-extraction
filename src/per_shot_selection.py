@@ -1,4 +1,4 @@
-﻿"""
+"""
 Stage 7 - Per-shot selection with diversity controls.
 """
 
@@ -8,6 +8,7 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 
 from src.config import (
+    FACE_DETECTION_ENABLED,
     HERO_SIGMA_FRACTION,
     MIN_TEMPORAL_DISTANCE,
     SHOT_K_DIVISOR,
@@ -24,6 +25,7 @@ from src.config import (
     W_COLORFULNESS,
     W_CONTRAST,
     W_EDGE_DENSITY,
+    W_FACE_QUALITY,
     W_HERO_BIAS,
     W_SHARPNESS,
 )
@@ -46,8 +48,13 @@ def compute_quality_scores(
     contrast: List[float],
     colorfulness: List[float],
     edge_density: List[float],
+    face_scores: Optional[List[float]] = None,
 ) -> List[float]:
-    """Compute base quality score per frame (without hero bias)."""
+    """Compute base quality score per frame (without hero bias).
+
+    When face_scores are provided and FACE_DETECTION_ENABLED, the face
+    quality weight is added and the total is re-normalized to sum to 1.0.
+    """
     n_sharp = normalize(sharpness)
     n_contrast = normalize(contrast)
     n_color = normalize(colorfulness)
@@ -59,8 +66,14 @@ def compute_quality_scores(
         + W_CONTRAST * n_contrast
         + W_COLORFULNESS * n_color
         - W_EDGE_DENSITY * n_edge
-    ) / max(base_weight, 1e-8)
+    )
 
+    if FACE_DETECTION_ENABLED and face_scores is not None:
+        n_face = normalize(face_scores)
+        scores = scores + W_FACE_QUALITY * n_face
+        base_weight = base_weight + W_FACE_QUALITY
+
+    scores = scores / max(base_weight, 1e-8)
     return scores.tolist()
 
 

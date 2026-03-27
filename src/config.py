@@ -48,7 +48,7 @@ ADAPTIVE_COLORFULNESS_MAX = 95.0
 SHOT_K_DIVISOR = 10                # Divide shot duration by this to get K
 SHOT_K_MIN = 1                     # Minimum frames per shot
 SHOT_K_MAX = 3                     # Base maximum frames per shot
-MIN_TEMPORAL_DISTANCE = 3.0        # Minimum seconds between selected frames in a shot
+MIN_TEMPORAL_DISTANCE = 1.0        # Minimum seconds between selected frames in a shot
 
 # Stage 7 diversity boost (Phase 3)
 STAGE7_DIVERSITY_ENABLED = True
@@ -107,3 +107,12 @@ QA_SAMPLES_PER_STAGE = 8           # Number of rejected frames to save per stage
 
 # Performance
 ANALYSIS_SCALE = 0.5               # Downscale factor for metric computation (0.5 = half res)
+
+# Face landmark quality (Stage 7 boost)
+FACE_DETECTION_ENABLED = True
+W_FACE_QUALITY = 0.20              # Weight in composite quality score
+FACE_MIN_DETECTION_CONFIDENCE = 0.5
+FACE_MIN_SIZE_FRACTION = 0.03      # Ignore faces smaller than 3% of frame area
+FACE_EAR_BLINK_THRESHOLD = 0.21    # Below this = eyes closed / blinking
+FACE_YAW_PENALTY_DEG = 45.0        # Start penalizing beyond 45° yaw
+FACE_PITCH_PENALTY_DEG = 30.0      # Start penalizing beyond 30° pitch

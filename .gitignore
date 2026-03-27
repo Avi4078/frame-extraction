@@ -31,5 +31,8 @@ test_output.txt
 TASKS.md
 PRD.md
 Project.MD
-
+*.md
 *.mp4
+
+output*
+vis*
